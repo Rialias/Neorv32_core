@@ -1,0 +1,9 @@
+syntax = "proto2";
+
+message get_device_infoRequest {}
+
+message get_device_infoResponse {
+    required string type = 1; 
+    required string product = 2;
+    required string ip = 3;
+}

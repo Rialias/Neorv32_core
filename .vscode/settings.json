@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "string_view": "c",
+        "ioctl.h": "c",
+        "termios.h": "c"
+    }
+}
