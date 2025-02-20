@@ -88,9 +88,15 @@ int main()
     } while (key != 'a');
     printf("Received 'a', continuing to read data...\n");
     memset(&read_buf, '\0', sizeof(read_buf));
-
+    char message_length = 'z';
+    read(serial_port, &message_length, sizeof(message_length));
+    printf("Received message Length: %d\n",message_length);
+    size_t length = (size_t)message_length;
+    printf("Length: %ld\n",length);
     for (;;)
-    {
+    {   
+        
+
         int num_bytes = read(serial_port, &read_buf, sizeof(read_buf));
         if (num_bytes < 0)
         {
@@ -113,12 +119,12 @@ int main()
             printf("%d", (uint8_t)read_buf[i]);
         }
         printf("\n");
-        for (i = 0; i < 25; i++)
+        for (i = 0; i < num_bytes-1; i++)
         {
             printf("%d", buffer[i]);
         }
         get_device_infoResponse response = get_device_infoResponse_init_zero;
-        pb_istream_t message_stream = pb_istream_from_buffer(buffer, 24);
+        pb_istream_t message_stream = pb_istream_from_buffer(buffer, length);
         if (!pb_decode(&message_stream, get_device_infoResponse_fields, &response))
         {
             printf("Failed to decode response: %s\n", PB_GET_ERROR(&message_stream));
@@ -134,3 +140,4 @@ int main()
     close(serial_port);
     return 0;
 }
+

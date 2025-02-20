@@ -64,9 +64,8 @@ int main()
     neorv32_cpu_delay_ms(5000);
     // handle_request();
     neorv32_uart0_putc('a');
-    neorv32_cpu_delay_ms(2000);
+
     handle_request();
-        //neorv32_cpu_delay_ms(1000);
     
     return 0;
 }
@@ -97,6 +96,7 @@ int handle_request()
         neorv32_uart0_printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
         return false;
     }
+    neorv32_uart0_putc((char)message_length);
     char message[256];
     for(size_t i=0; i< message_length; i++)
     {
