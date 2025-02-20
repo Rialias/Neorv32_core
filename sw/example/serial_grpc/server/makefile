@@ -16,7 +16,7 @@
 #	$(CC) $(CFLAGS) -o $@ $^ $(NANOPB_CORE)
 
 # Override the default CPU ISA
-MARCH = rv32i_zicsr_zifencei
+MARCH = rv32im_zicsr_zifencei
 
 # Override the default RISC-V GCC prefix
 #RISCV_PREFIX ?= riscv-none-elf-

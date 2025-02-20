@@ -11,6 +11,6 @@
 
 * include:"sys/types.h"
 * include:"dirent.h"
-get_device_infoResponse.type 		max_size:40
-get_device_infoResponse.product 	max_size:40
+get_device_infoResponse.type 		max_size:30
+get_device_infoResponse.product 	max_size:30
 get_device_infoResponse.ip 		 max_size:40

@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,57 +9,22 @@
 
 #include <fcntl.h>
 #include <errno.h>
-#include <asm/termbits.h>
-#include <sys/ioctl.h>
+#include <termios.h>
 #include <unistd.h>
+#include <stdlib.h>
+
+#define BUFFER_SIZE 256
 
 /**********************************************************************/
 /**
  * @name User configuration
  **************************************************************************/
 /* This is the buffer where we will store our message. */
-uint8_t buffer[256];
+uint8_t buffer[BUFFER_SIZE];
 size_t message_length;
 bool status;
-
-bool send_device_info_request(int fd);
-bool get_device_info_response(uint8_t *buffer, size_t length);
-
-void setup_serial(int fd)
-{
-    struct termios2 tty;
-    if (ioctl(fd, TCGETS2, &tty) != 0)
-    {
-        printf("Error %d from ioctl TCGETS2: %s\n", errno, strerror(errno));
-        return;
-    }
-
-    tty.c_cflag &= ~PARENB;
-    tty.c_cflag &= ~CSTOPB;
-    tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;
-    tty.c_cflag &= ~CRTSCTS;
-    tty.c_cflag |= CREAD | CLOCAL;
-    tty.c_lflag &= ~ICANON;
-    tty.c_lflag &= ECHO;
-    tty.c_lflag &= ~ECHOE;
-    tty.c_lflag &= ~ECHONL;
-    tty.c_lflag &= ~ISIG;
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-    tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
-    tty.c_oflag &= ~OPOST;
-    tty.c_oflag &= ~ONLCR;
-    tty.c_cc[VTIME] = 10;
-    tty.c_cc[VMIN] = 0;
-    tty.c_ispeed = 19200;
-    tty.c_ospeed = 19200;
-
-    if (ioctl(fd, TCSETS2, &tty) != 0)
-    {
-        printf("Error %d from ioctl TCSETS2: %s\n", errno, strerror(errno));
-        return;
-    }
-}
+/* bool send_device_info_request(int fd); */
+/* bool get_device_info_response(char* message_buf); */
 
 /**********************************************************************/
 /**
@@ -73,84 +37,100 @@ void setup_serial(int fd)
 int main()
 {
 
-    int fd = open("/dev/ttyUSB0", O_RDWR);
-    if (fd < 0)
+    int serial_port = open("/dev/ttyUSB3", O_RDWR);
+    struct termios tty;
+
+    if (tcgetattr(serial_port, &tty) != 0)
     {
-        printf("Error %d opening /dev/ttyUSB0: %s\n", errno, strerror(errno));
-        return -1;
+        printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+        return 1;
     }
 
-    setup_serial(fd);
-    printf("Serial Communication set successfully \n");
+    tty.c_cflag &= ~PARENB;
+    tty.c_cflag &= ~CSTOPB;
+    tty.c_cflag &= ~CSIZE;
+    tty.c_cflag |= CS8;
 
-    send_device_info_request(fd);
+    tty.c_cflag |= CREAD | CLOCAL;
+    tty.c_lflag &= ~ICANON;
+    tty.c_lflag &= ~ECHO;
+    tty.c_lflag &= ~ECHOE;
+    tty.c_lflag &= ~ECHONL;
+    tty.c_lflag &= ~ISIG;
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+    tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
 
-    uint8_t read_buf[256];
-    while (1)
+    tty.c_oflag &= ~OPOST;
+    tty.c_oflag &= ~ONLCR;
+
+    tty.c_cc[VTIME] = 10;
+    tty.c_cc[VMIN] = 24;
+
+    cfsetispeed(&tty, B19200);
+    cfsetospeed(&tty, B19200);
+
+    if (tcsetattr(serial_port, TCSANOW, &tty) != 0)
     {
+        printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+        return 1;
+    }
 
-        int num_bytes = read(fd, &read_buf, sizeof(read_buf));
-        if (num_bytes > 0)
+    char read_buf[256];
+    char key = 'y';
+    do
+    {
+        int num_bytes = read(serial_port, &key, 1);
+        if (num_bytes < 0)
         {
-            get_device_info_response(read_buf, num_bytes);
+            printf("Error reading: %s\n", strerror(errno));
+            return 1;
+        }
+    } while (key != 'a');
+    printf("Received 'a', continuing to read data...\n");
+    memset(&read_buf, '\0', sizeof(read_buf));
+
+    for (;;)
+    {
+        int num_bytes = read(serial_port, &read_buf, sizeof(read_buf));
+        if (num_bytes < 0)
+        {
+            printf("Error reading: %s", strerror(errno));
+            return 1;
+        }
+        /* printf("Read %i bytes. Received message:%s", num_bytes, read_buf);*/
+        int i;
+        int j = 0; 
+        for (i = 0; i < num_bytes; i++)
+        {
+            if ((uint8_t)read_buf[i] != 13)
+            { 
+                buffer[j++] = (uint8_t)read_buf[i];
+            }
+        }
+
+        for (i = 0; i < num_bytes; i++)
+        {
+            printf("%d", (uint8_t)read_buf[i]);
+        }
+        printf("\n");
+        for (i = 0; i < 25; i++)
+        {
+            printf("%d", buffer[i]);
+        }
+        get_device_infoResponse response = get_device_infoResponse_init_zero;
+        pb_istream_t message_stream = pb_istream_from_buffer(buffer, 24);
+        if (!pb_decode(&message_stream, get_device_infoResponse_fields, &response))
+        {
+            printf("Failed to decode response: %s\n", PB_GET_ERROR(&message_stream));
         }
         else
         {
-            printf("Error reading: %s", strerror(errno));
+            printf("Device type: %s\n", response.type);
+            printf("Product: %s\n", response.product);
+            printf("IP: %s\n", response.ip);
         }
     }
 
+    close(serial_port);
     return 0;
-}
-
-bool send_device_info_request(int fd)
-{
-
-    /* Construct and send the request to server */
-    {
-        /* Create a message to send */
-        get_device_infoRequest deviceinfo = {};
-
-        /* Create a stream that will write to our buffer. */
-        pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
-
-        deviceinfo.dummy_field = 'a';
-
-        /* Now we are ready to encode the message! */
-        status = pb_encode(&stream, get_device_infoRequest_fields, &deviceinfo);
-
-        message_length = stream.bytes_written;
-
-        /* Then just check for any errors.. */
-        if (!status)
-        {
-            printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
-            return 1;
-        }
-
-        write(fd, buffer, message_length);
-        printf("Sucessfully sent data \n");
-    }
-    return true;
-}
-
-bool get_device_info_response(uint8_t *buffer, size_t length)
-{
-    /* Read back the response from server */
-    {
-        get_device_infoResponse response = {};
-
-        /* Create a stream that reads from the buffer. */
-        pb_istream_t stream = pb_istream_from_buffer(buffer, length);
-
-        if (!pb_decode(&stream, get_device_infoResponse_fields, &response))
-        {
-            fprintf(stderr, "Decode failed: %s\n", PB_GET_ERROR(&stream));
-            return false;
-        }
-        printf("Device type: %s\n", response.type);
-        printf("Product: %s\n", response.product);
-        printf("IP: %s\n", response.ip);
-    }
-    return true;
 }

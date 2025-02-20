@@ -2,6 +2,9 @@
     "files.associations": {
         "string_view": "c",
         "ioctl.h": "c",
-        "termios.h": "c"
+        "termios.h": "c",
+        "cstdint": "c",
+        "termbits.h": "c",
+        "unistd.h": "c"
     }
 }

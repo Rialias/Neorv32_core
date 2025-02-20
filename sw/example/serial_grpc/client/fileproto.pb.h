@@ -17,8 +17,8 @@ typedef struct _get_device_infoRequest {
 } get_device_infoRequest;
 
 typedef struct _get_device_infoResponse {
-    char type[40];
-    char product[40];
+    char type[30];
+    char product[30];
     char ip[40];
 } get_device_infoResponse;
 
@@ -61,7 +61,7 @@ extern const pb_msgdesc_t get_device_infoResponse_msg;
 /* Maximum encoded size of messages (where known) */
 #define FILEPROTO_PB_H_MAX_SIZE                  get_device_infoResponse_size
 #define get_device_infoRequest_size              0
-#define get_device_infoResponse_size             123
+#define get_device_infoResponse_size             103
 
 #ifdef __cplusplus
 } /* extern "C" */
