@@ -24,6 +24,7 @@ uint8_t buffer[BUFFER_SIZE];
 size_t message_length;
 bool status;
 bool send_request(int fd, int request_type);
+bool receive_response(pb_byte_t *message, size_t length);
 
 /**********************************************************************/
 /**
@@ -36,7 +37,7 @@ bool send_request(int fd, int request_type);
 int main()
 {
 
-    int serial_port = open("/dev/ttyUSB3", O_RDWR);
+    int serial_port = open("/dev/ttyUSB7", O_RDWR);
     struct termios tty;
 
     if (tcgetattr(serial_port, &tty) != 0)
@@ -63,7 +64,7 @@ int main()
     tty.c_oflag &= ~ONLCR;
 
     tty.c_cc[VTIME] = 10;
-    tty.c_cc[VMIN] = 0;
+    tty.c_cc[VMIN] = 20;
 
     cfsetispeed(&tty, B19200);
     cfsetospeed(&tty, B19200);
@@ -73,12 +74,67 @@ int main()
         printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
         return 1;
     }
+    /* Clear the input buffer*/
+    if (tcflush(serial_port, TCIFLUSH) != 0) {
+        perror("tcflush");
+        close(serial_port);
+        return -1;
+    }
 
     int request_type = 0;
     printf("1. Get Device Info \n 2. Claim the device \n 3. Reclaim the device \n 4. Unlcaim the device \n 5. set LEd \n");
     scanf("%d", &request_type);
-
     send_request(serial_port, request_type);
+
+    char read_buf[256];
+    char key = 'y';
+    do
+    {
+        int num_bytes = read(serial_port, &key, 1);
+        if (num_bytes < 0)
+        {
+            printf("Error reading: %s\n", strerror(errno));
+            return 1;
+        }
+    } while (key != 'a');
+    printf("Received 'a', continuing to read data...\n");
+    memset(&read_buf, '\0', sizeof(read_buf));
+    char message_length = 'z';
+    read(serial_port, &message_length, sizeof(message_length));
+    printf("Received message Length: %d\n",message_length);
+    size_t length = (size_t)message_length;
+    printf("Length: %ld\n",length);
+    
+
+        int num_bytes = read(serial_port, &read_buf, length+2);
+        if (num_bytes < 0)
+        {
+            printf("Error reading: %s", strerror(errno));
+            return 1;
+        }
+        /* printf("Read %i bytes. Received message:%s", num_bytes, read_buf);*/
+        int i;
+        int j = 0; 
+        for (i = 0; i < length+2; i++)
+        {
+            if ((uint8_t)read_buf[i] != 13)
+            { 
+                buffer[j++] = (uint8_t)read_buf[i];
+            }
+        }
+
+        for (i = 0; i < length; i++)
+        {
+            printf("%d", (uint8_t)read_buf[i]);
+        }
+        printf("\n");
+        for (i = 0; i < num_bytes-1; i++)
+        {
+            printf("%d", buffer[i]);
+        }
+        receive_response(buffer, length);
+    
+    
     close(serial_port);
     return 0;
 }
@@ -86,9 +142,9 @@ int main()
 bool send_request(int fd, int request_type)
 {
     size_t i;
-    char msg_buffer[128];
+    char msg_buffer[256];
     size_t j = 0;
-    uint8_t buffer[128];
+    uint8_t buffer[256];
     Request request = Request_init_zero;
     pb_ostream_t ostream = pb_ostream_from_buffer(buffer, sizeof(buffer));
     
@@ -116,9 +172,9 @@ bool send_request(int fd, int request_type)
         uint32_t color;
         printf("1. Enter the color to set \n");
         scanf("%d", &color);
-        printf("1. Enter the id to set \n");
+        printf("2. Enter the id to set \n");
         scanf("%d", &id);
-        printf("1. Enter the token \n");
+        printf("3. Enter the token \n");
         scanf("%s", token);
         request.request_type.set_smartled.color = color;
         request.request_type.set_smartled.id = id;
@@ -154,50 +210,38 @@ bool send_request(int fd, int request_type)
 
     printf("\n");
     printf("Sucessfully sent data. Message length = %ld \n", message_length);
+    return 0;
+}
 
-    /*pb_istream_t istream = pb_istream_from_buffer(buffer, message_length);
-    Request request1 = Request_init_zero;
+bool receive_response(pb_byte_t *message, size_t length)
+{
+    /*char buffer[256];
+    uint8_t message[256];
+    size_t length = 0; */
     Response response = Response_init_zero;
 
-    if (!pb_decode_delimited(&istream, Request_fields, &request1))
+    pb_istream_t istream = pb_istream_from_buffer(message, length);
+    if (!pb_decode(&istream, Response_fields, &response))
     {
         printf("Failed to decode response: %s\n", PB_GET_ERROR(&istream));
         return 1;
     }
-
-    if (request1.which_request_type == Request_get_device_info_tag)
+    if (response.which_response_type == Response_get_device_info_tag)
     {
         printf("Device Info\n");
-        strcpy(response.response_type.get_device_info.type, "x3xx");
-        strcpy(response.response_type.get_device_info.product, "X310");
-        strcpy(response.response_type.get_device_info.ip, "192.10.1.1");
-        response.which_response_type = Response_get_device_info_tag;
+        printf("Type = %s \n",response.response_type.get_device_info.type);
+        printf("Product: %s\n",response.response_type.get_device_info.product);
+        printf("IP: %s\n",response.response_type.get_device_info.ip);
+
     }
-    else if (request1.which_request_type == Request_claim_tag)
+    else if (response.which_response_type == Response_claim_tag)
     {
         printf("claim\n");
-        strcpy(response.response_type.claim.token, "password");
-        response.which_response_type = Response_claim_tag;
-    }
-    else if (request1.which_request_type == Request_reclaim_tag)
-    {
-        printf("reclaim\n");
-        strcpy(response.response_type.claim.token, "password");
-        response.which_response_type = Response_claim_tag;
-    }
-    else if (request1.which_request_type == Request_unclaim_tag)
-    {
-        printf("unclaim\n");
-        strcpy(response.response_type.claim.token, "0000");
-        response.which_response_type = Response_claim_tag;
-    }
-    else if (request1.which_request_type == Request_set_smartled_tag)
-    {
-        printf("samrtled\n");
+        printf("Token : %s\n",response.response_type.claim.token);
     }
     else
     {
-        printf("Wrong request \n");
-    } */
+        printf("Wrong Response \n");
+    }
     return 0;
 }
