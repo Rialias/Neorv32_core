@@ -12,4 +12,25 @@ PB_BIND(get_device_infoRequest, get_device_infoRequest, AUTO)
 PB_BIND(get_device_infoResponse, get_device_infoResponse, AUTO)
 
 
+PB_BIND(claimRequest, claimRequest, AUTO)
+
+
+PB_BIND(claimResponse, claimResponse, AUTO)
+
+
+PB_BIND(reclaimRequest, reclaimRequest, AUTO)
+
+
+PB_BIND(unclaimRequest, unclaimRequest, AUTO)
+
+
+PB_BIND(set_smartledRequest, set_smartledRequest, AUTO)
+
+
+PB_BIND(Request, Request, AUTO)
+
+
+PB_BIND(Response, Response, AUTO)
+
+
 

@@ -14,3 +14,7 @@
 get_device_infoResponse.type 		max_size:30
 get_device_infoResponse.product 	max_size:30
 get_device_infoResponse.ip 		 max_size:40
+reclaimRequest.token           max_size:50
+unclaimRequest.token           max_size:50
+claimResponse.token           max_size:50
+set_smartledRequest.token     max_size:50

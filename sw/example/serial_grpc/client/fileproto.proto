@@ -7,3 +7,40 @@ message get_device_infoResponse {
     required string product = 2;
     required string ip = 3;
 }
+
+message claimRequest {}
+
+message claimResponse {
+    required string token = 1;
+}
+
+message reclaimRequest {
+    required string token = 1;
+}
+
+message unclaimRequest {
+    required string token = 1;
+}
+
+message set_smartledRequest {
+    required string token = 1;
+    required int32 id = 2;
+    required uint32 color = 3;
+}
+
+message Request {
+    oneof request_type {
+        get_device_infoRequest get_device_info = 1;
+        claimRequest claim = 2;
+        reclaimRequest reclaim = 3;
+        unclaimRequest unclaim = 4;
+        set_smartledRequest set_smartled = 5;
+    }
+}
+
+message Response {
+    oneof response_type {
+        get_device_infoResponse get_device_info = 1;
+        claimResponse claim = 2;
+    }
+}
