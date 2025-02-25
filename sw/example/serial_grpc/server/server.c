@@ -143,7 +143,7 @@ bool handle_request(pb_istream_t *istream)
         return 1;
     }
     
-    status = pb_encode(&ostream, Response_fields, &response);
+    status = pb_encode_delimited(&ostream, Response_fields, &response);
     message_length = ostream.bytes_written;
     if (!status)
     {

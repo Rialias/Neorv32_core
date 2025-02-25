@@ -63,8 +63,8 @@ int main()
     tty.c_oflag &= ~OPOST;
     tty.c_oflag &= ~ONLCR;
 
-    tty.c_cc[VTIME] = 15;
-    tty.c_cc[VMIN] = 5;
+    tty.c_cc[VTIME] = 10;
+    tty.c_cc[VMIN] = 30;
 
     cfsetispeed(&tty, B19200);
     cfsetospeed(&tty, B19200);
@@ -76,7 +76,6 @@ int main()
     }
     while (1)
     {
-
         int request_type = 0;
         printf("1. Get Device Info \n 2.Claim the device \n 3.Reclaim the device \n 4.Unlcaim the device \n 5.set LEd \n");
         scanf("%d", &request_type);
@@ -103,10 +102,10 @@ int main()
         read(serial_port, &message_length, sizeof(message_length));
         printf("Received message Length: %d\n", message_length);
         size_t length = (size_t)message_length;
-        char read_buf[length + 2];
+        char read_buf[length];
         uint8_t buffer[length];
 
-        int num_bytes = read(serial_port, &read_buf, length + 2);
+        int num_bytes = read(serial_port, &read_buf, length);
         if (num_bytes <= 0)
         {
             printf("Error reading: %s", strerror(errno));
@@ -114,7 +113,7 @@ int main()
         }
         int i;
         int j = 0;
-        for (i = 0; i < length + 2; i++)
+        for (i = 0; i < length; i++)
         {
             if ((uint8_t)read_buf[i] != 13)
             {
@@ -204,11 +203,12 @@ bool receive_response(pb_byte_t *message, size_t length)
     Response response = Response_init_zero;
 
     pb_istream_t istream = pb_istream_from_buffer(message, length);
-    if (!pb_decode(&istream, Response_fields, &response))
+    if (!pb_decode_delimited(&istream, Response_fields, &response))
     {
         printf("Failed to decode response: %s\n", PB_GET_ERROR(&istream));
         return 1;
     }
+    printf("\n");
     if (response.which_response_type == Response_get_device_info_tag)
     {
         printf("Device Info\n");

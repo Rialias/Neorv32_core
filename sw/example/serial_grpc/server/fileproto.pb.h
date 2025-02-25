@@ -19,7 +19,7 @@ typedef struct _get_device_infoRequest {
 typedef struct _get_device_infoResponse {
     char type[30];
     char product[30];
-    char ip[40];
+    char ip[50];
 } get_device_infoResponse;
 
 typedef struct _claimRequest {
@@ -27,15 +27,15 @@ typedef struct _claimRequest {
 } claimRequest;
 
 typedef struct _claimResponse {
-    char token[50];
+    char token[30];
 } claimResponse;
 
 typedef struct _reclaimRequest {
-    char token[50];
+    char token[30];
 } reclaimRequest;
 
 typedef struct _reclaimResponse {
-    char token[50];
+    char token[30];
 } reclaimResponse;
 
 typedef struct _unclaimRequest {
@@ -43,17 +43,17 @@ typedef struct _unclaimRequest {
 } unclaimRequest;
 
 typedef struct _unclaimResponse {
-    char token[50];
+    char token[30];
 } unclaimResponse;
 
 typedef struct _set_smartledRequest {
-    char token[50];
+    char token[30];
     int32_t id;
     uint32_t color;
 } set_smartledRequest;
 
 typedef struct _set_smartledResponse {
-    char token[50];
+    char token[30];
 } set_smartledResponse;
 
 typedef struct _Request {
@@ -244,18 +244,18 @@ extern const pb_msgdesc_t Response_msg;
 
 /* Maximum encoded size of messages (where known) */
 #define FILEPROTO_PB_H_MAX_SIZE                  Response_size
-#define Request_size                             70
-#define Response_size                            105
+#define Request_size                             50
+#define Response_size                            115
 #define claimRequest_size                        0
-#define claimResponse_size                       51
+#define claimResponse_size                       31
 #define get_device_infoRequest_size              0
-#define get_device_infoResponse_size             103
-#define reclaimRequest_size                      51
-#define reclaimResponse_size                     51
-#define set_smartledRequest_size                 68
-#define set_smartledResponse_size                51
+#define get_device_infoResponse_size             113
+#define reclaimRequest_size                      31
+#define reclaimResponse_size                     31
+#define set_smartledRequest_size                 48
+#define set_smartledResponse_size                31
 #define unclaimRequest_size                      0
-#define unclaimResponse_size                     51
+#define unclaimResponse_size                     31
 
 #ifdef __cplusplus
 } /* extern "C" */
