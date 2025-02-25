@@ -102,10 +102,10 @@ int main()
         read(serial_port, &message_length, sizeof(message_length));
         printf("Received message Length: %d\n", message_length);
         size_t length = (size_t)message_length;
-        char read_buf[length];
+        char read_buf[length+3];
         uint8_t buffer[length];
 
-        int num_bytes = read(serial_port, &read_buf, length);
+        int num_bytes = read(serial_port, &read_buf, length+3);
         if (num_bytes <= 0)
         {
             printf("Error reading: %s", strerror(errno));
@@ -113,7 +113,7 @@ int main()
         }
         int i;
         int j = 0;
-        for (i = 0; i < length; i++)
+        for (i = 0; i < length+3; i++)
         {
             if ((uint8_t)read_buf[i] != 13)
             {
