@@ -64,7 +64,7 @@ int main()
     tty.c_oflag &= ~ONLCR;
 
     tty.c_cc[VTIME] = 10;
-    tty.c_cc[VMIN] = 0;
+    tty.c_cc[VMIN] = 5;
 
     cfsetispeed(&tty, B19200);
     cfsetospeed(&tty, B19200);
@@ -75,14 +75,15 @@ int main()
         return 1;
     }
     /* Clear the input buffer*/
-    if (tcflush(serial_port, TCIFLUSH) != 0) {
+    if (tcflush(serial_port, TCIFLUSH) != 0)
+    {
         perror("tcflush");
         close(serial_port);
         return -1;
     }
 
     int request_type = 0;
-    printf("1. Get Device Info \n 2. Claim the device \n 3. Reclaim the device \n 4. Unlcaim the device \n 5. set LEd \n");
+    printf("1. Get Device Info \n 2.Claim the device \n 3.Reclaim the device \n 4.Unlcaim the device \n 5.set LEd \n");
     scanf("%d", &request_type);
     send_request(serial_port, request_type);
 
@@ -101,40 +102,38 @@ int main()
     memset(&read_buf, '\0', sizeof(read_buf));
     char message_length = 'z';
     read(serial_port, &message_length, sizeof(message_length));
-    printf("Received message Length: %d\n",message_length);
+    printf("Received message Length: %d\n", message_length);
     size_t length = (size_t)message_length;
-    printf("Length: %ld\n",length);
-    
+    /*printf("Length: %ld\n",length); */
 
-        int num_bytes = read(serial_port, &read_buf, length+2);
-        if (num_bytes < 0)
+    int num_bytes = read(serial_port, &read_buf, length + 2);
+    if (num_bytes < 0)
+    {
+        printf("Error reading: %s", strerror(errno));
+        return 1;
+    }
+    /* printf("Read %i bytes. Received message:%s", num_bytes, read_buf);*/
+    int i;
+    int j = 0;
+    for (i = 0; i < length + 2; i++)
+    {
+        if ((uint8_t)read_buf[i] != 13)
         {
-            printf("Error reading: %s", strerror(errno));
-            return 1;
+            buffer[j++] = (uint8_t)read_buf[i];
         }
-        /* printf("Read %i bytes. Received message:%s", num_bytes, read_buf);*/
-        int i;
-        int j = 0; 
-        for (i = 0; i < length+2; i++)
-        {
-            if ((uint8_t)read_buf[i] != 13)
-            { 
-                buffer[j++] = (uint8_t)read_buf[i];
-            }
-        }
+    }
 
-        for (i = 0; i < length; i++)
-        {
-            printf("%d", (uint8_t)read_buf[i]);
-        }
-        printf("\n");
-        for (i = 0; i < num_bytes-1; i++)
-        {
-            printf("%d", buffer[i]);
-        }
-        receive_response(buffer, length);
-    
-    
+    /*for (i = 0; i < length; i++)
+    {
+        printf("%d", (uint8_t)read_buf[i]);
+    }
+    printf("\n");
+    for (i = 0; i < num_bytes - 1; i++)
+    {
+        printf("%d", buffer[i]);
+    } */
+    receive_response(buffer, length);
+
     close(serial_port);
     return 0;
 }
@@ -147,7 +146,7 @@ bool send_request(int fd, int request_type)
     uint8_t buffer[256];
     Request request = Request_init_zero;
     pb_ostream_t ostream = pb_ostream_from_buffer(buffer, sizeof(buffer));
-    
+
     if (request_type == 1)
     {
         request.which_request_type = Request_get_device_info_tag;
@@ -196,22 +195,22 @@ bool send_request(int fd, int request_type)
         printf("Encoding failed: %s\n", PB_GET_ERROR(&ostream));
         return 1;
     }
-    
-    for (i = 0; i < message_length; i++)
+
+    /*for (i = 0; i < message_length; i++)
     {
         printf("%d\n", buffer[i]);
     }
-    printf("\n");
+    printf("\n"); */
     for (i = 0; i < message_length; i++)
     {
-        j += sprintf(&msg_buffer[j],"%d ", buffer[i]);
+        j += sprintf(&msg_buffer[j], "%d ", buffer[i]);
     }
-    msg_buffer[j-1] = '\0';
-    printf("j value = %ld\n", j);
-    int written = write(fd, msg_buffer, strlen(msg_buffer));
-    printf("written = %d\n", written);
-    printf("send value = %s\n", msg_buffer);
-
+    msg_buffer[j - 1] = '\r';
+    /*printf("j value = %ld\n", j);
+    int written = */
+    write(fd, msg_buffer, strlen(msg_buffer));
+    /*printf("written = %d\n", written);
+    printf("send value = %s\n", msg_buffer); */
     printf("\n");
     printf("Sucessfully sent data. Message length = %ld \n", message_length);
     return 0;
@@ -233,31 +232,30 @@ bool receive_response(pb_byte_t *message, size_t length)
     if (response.which_response_type == Response_get_device_info_tag)
     {
         printf("Device Info\n");
-        printf("Type = %s \n",response.response_type.get_device_info.type);
-        printf("Product: %s\n",response.response_type.get_device_info.product);
-        printf("IP: %s\n",response.response_type.get_device_info.ip);
-
+        printf("Type = %s \n", response.response_type.get_device_info.type);
+        printf("Product: %s\n", response.response_type.get_device_info.product);
+        printf("IP: %s\n", response.response_type.get_device_info.ip);
     }
     else if (response.which_response_type == Response_claim_tag)
     {
         printf("claim\n");
-        printf("Token : %s\n",response.response_type.claim.token);
+        printf("Token : %s\n", response.response_type.claim.token);
     }
     else if (response.which_response_type == Response_reclaim_tag)
     {
         printf("Reclaimed the device\n");
-        printf("Token : %s\n",response.response_type.reclaim.token);
+        printf("Token : %s\n", response.response_type.reclaim.token);
     }
     else if (response.which_response_type == Response_unclaim_tag)
     {
         printf("Unclaimed the device \n");
-        printf("Token : %s\n",response.response_type.unclaim.token);
-    } 
+        printf("Token : %s\n", response.response_type.unclaim.token);
+    }
     else if (response.which_response_type == Response_led_tag)
     {
         printf("Set Neopixel LED \n");
-        printf("Token : %s\n",response.response_type.led.token);
-    } 
+        printf("Token : %s\n", response.response_type.led.token);
+    }
     else
     {
         printf("Wrong Response \n");
