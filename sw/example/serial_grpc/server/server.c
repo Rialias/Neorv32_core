@@ -102,7 +102,7 @@ int main()
 
         pb_istream_t istream = pb_istream_from_buffer(message, length);
         // pb_ostream_t ostream = pb_ostream_from_buffer(message, sizeof(message));
-        neorv32_cpu_delay_ms(2000);
+        //neorv32_cpu_delay_ms(1000);
         handle_request(&istream);
     }
     return 0;

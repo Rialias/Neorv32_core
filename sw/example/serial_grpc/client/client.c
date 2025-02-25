@@ -20,7 +20,7 @@
  * @name User configuration
  **************************************************************************/
 /* This is the buffer where we will store our message. */
-uint8_t buffer[BUFFER_SIZE];
+
 size_t message_length;
 bool status;
 bool send_request(int fd, int request_type);
@@ -63,7 +63,7 @@ int main()
     tty.c_oflag &= ~OPOST;
     tty.c_oflag &= ~ONLCR;
 
-    tty.c_cc[VTIME] = 10;
+    tty.c_cc[VTIME] = 15;
     tty.c_cc[VMIN] = 5;
 
     cfsetispeed(&tty, B19200);
@@ -98,16 +98,17 @@ int main()
             return 1;
         }
     } while (key != 'a');
-    printf("Received 'a', continuing to read data...\n");
-    memset(&read_buf, '\0', sizeof(read_buf));
+    /* printf("Received 'a', continuing to read data...\n"); */
+    /*memset(&read_buf, '\0', sizeof(read_buf)); */
     char message_length = 'z';
     read(serial_port, &message_length, sizeof(message_length));
     printf("Received message Length: %d\n", message_length);
     size_t length = (size_t)message_length;
     /*printf("Length: %ld\n",length); */
+    uint8_t buffer[message_length];
 
-    int num_bytes = read(serial_port, &read_buf, length + 2);
-    if (num_bytes < 0)
+    int num_bytes = read(serial_port, &read_buf, length+2);
+    if (num_bytes <= 0)
     {
         printf("Error reading: %s", strerror(errno));
         return 1;
@@ -255,6 +256,10 @@ bool receive_response(pb_byte_t *message, size_t length)
     {
         printf("Set Neopixel LED \n");
         printf("Token : %s\n", response.response_type.led.token);
+        if(strcmp("password", response.response_type.led.token))
+        {
+            printf("Token doesnt match, LED is not set \n");
+        }
     }
     else
     {
