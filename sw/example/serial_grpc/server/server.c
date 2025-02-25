@@ -31,7 +31,6 @@
 
 int message_length;
 bool status;
-char key[30];
 
 bool handle_request(pb_istream_t *istream);
 
@@ -73,38 +72,18 @@ int main()
             neorv32_uart0_printf("empty \n");
             continue;
         } // nothing to be done
-
         /*neorv32_uart0_printf("Received something %d \n", length);
         for (int i = 0; i < 200; i++)
         {
             neorv32_uart0_printf("%d\n", i);
-        }  */
-        neorv32_cpu_delay_ms(3000);
+        } */
         uint8_t message[256];
-
-        /*for (int j = 0; j < length; j++)
-        {
-            neorv32_uart0_printf("%c", buffer[j]);
-        }
-        neorv32_uart0_printf("\n"); */
-        // Convert the buffer to uint8_t values
         int msg_index = 0;
-        int num = 0;
-        for (int j = 0; j < length; j++)
+        char *token = strtok(buffer, " ");
+        while (token != NULL)
         {
-            if (buffer[j] >= '0' && buffer[j] <= '9')
-            {
-                num = num * 10 + (buffer[j] - '0');
-            }
-            else if (buffer[j] == ' ' || j == length - 1)
-            {
-                if (buffer[j] != ' ')
-                {
-                    num = num * 10 + (buffer[j] - '0');
-                }
-                message[msg_index++] = (uint8_t)num;
-                num = 0;
-            }
+            message[msg_index++] = (uint8_t)atoi(token);
+            token = strtok(NULL, " ");
         }
 
         // Print the converted values
@@ -112,16 +91,9 @@ int main()
         {
             neorv32_uart0_printf("%d\n", message[j]);
         }
-        neorv32_uart0_printf("\n");
-
-        for (int j = 0; j < msg_index; j++)
-        {
-            neorv32_uart0_printf("%d \n", message[j]);
-        }
-        neorv32_uart0_printf("\n");
 
         // Print raw bytes of the message
-        for (int j = 0; j < length; j++)
+        for (int j = 0; j < msg_index; j++)
         {
             neorv32_uart0_printf("%X ", message[j]);
         }
@@ -130,7 +102,7 @@ int main()
 
         pb_istream_t istream = pb_istream_from_buffer(message, length);
         // pb_ostream_t ostream = pb_ostream_from_buffer(message, sizeof(message));
-        neorv32_cpu_delay_ms(5000);
+        neorv32_cpu_delay_ms(2000);
         handle_request(&istream);
     }
     return 0;
@@ -148,7 +120,7 @@ bool handle_request(pb_istream_t *istream)
 
     if (!pb_decode_delimited(istream, Request_fields, &request))
     {
-        neorv32_uart0_printf("Failed to decode response: %s\n", PB_GET_ERROR(istream));
+        neorv32_uart0_printf("Failed to decode request: %s\n", PB_GET_ERROR(istream));
         return 1;
     }
     neorv32_uart0_putc('a');
@@ -170,24 +142,25 @@ bool handle_request(pb_istream_t *istream)
     else if (request.which_request_type == Request_reclaim_tag)
     {
         // neorv32_uart0_printf("reclaim\n");
-        strcpy(response.response_type.claim.token, "password");
-        response.which_response_type = Response_claim_tag;
+        strcpy(response.response_type.reclaim.token, request.request_type.reclaim.token);
+        response.which_response_type = Response_reclaim_tag;
     }
     else if (request.which_request_type == Request_unclaim_tag)
     {
         // neorv32_uart0_printf("unclaim\n");
-        strcpy(response.response_type.claim.token, "0000");
-        response.which_response_type = Response_claim_tag;
+        strcpy(response.response_type.unclaim.token, "no_token");
+        response.which_response_type = Response_unclaim_tag;
     }
     else if (request.which_request_type == Request_set_smartled_tag)
     {
         // neorv32_uart0_printf("samrtled\n");
-        response.which_response_type = Response_claim_tag;
+        strcpy(response.response_type.led.token, request.request_type.set_smartled.token);
         uint32_t color = request.request_type.set_smartled.color;
         int32_t id = request.request_type.set_smartled.id;
         char token[20];
         strcpy(token, request.request_type.set_smartled.token);
-        setLED(color,id,token);
+        setLED(color, id, token);
+        response.which_response_type = Response_led_tag;
     }
     else
     {
@@ -201,7 +174,7 @@ bool handle_request(pb_istream_t *istream)
         neorv32_uart0_printf("Encoding failed: %s\n", PB_GET_ERROR(&ostream));
         return 1;
     }
-    // neorv32_uart0_printf("%d", message_length);
+    //neorv32_uart0_printf("%d", message_length);
     neorv32_uart0_putc((char)message_length);
 
     for (size_t i = 0; i < message_length; i++)
@@ -218,21 +191,21 @@ int setLED(uint32_t color, int32_t id, char *token)
     // check if NEOLED unit is implemented at all, abort if not
     if (neorv32_neoled_available() == 0)
     {
-        //neorv32_uart0_printf("Error! No NEOLED unit synthesized!\n");
+        // neorv32_uart0_printf("Error! No NEOLED unit synthesized!\n");
         return 1;
     }
     set_smartledRequest led = set_smartledRequest_init_zero;
-    if (strcmp(key, "password"))
+    if (strcmp(token,"password"))
     {
-        //neorv32_uart0_printf("\n Device is not claimed. Token doesn't match \n\n");
+        // neorv32_uart0_printf("\n Device is not claimed. Token doesn't match \n\n");
     }
     else
     {
-      
+
         neorv32_neoled_setup_ws2812(0); // interrupt configuration = fire IRQ if TX FIFO is empty (not used here)
         neorv32_neoled_set_mode(0);     // mode = 0 = 24-bit
         // clear all LEDs
-        //neorv32_uart0_printf("\n Clearing all LEDs...\n");
+        // neorv32_uart0_printf("\n Clearing all LEDs...\n");
         int i;
         for (i = 0; i < NUM_LEDS_24BIT; i++)
         {
@@ -242,7 +215,6 @@ int setLED(uint32_t color, int32_t id, char *token)
         neorv32_cpu_delay_ms(500);
         led.id = id;
         led.color = color;
-        strcpy(led.token, key);
         for (int i = 0; i < NUM_LEDS_24BIT; i++)
         {
             if (i == led.id)

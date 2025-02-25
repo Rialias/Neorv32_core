@@ -34,15 +34,27 @@ typedef struct _reclaimRequest {
     char token[50];
 } reclaimRequest;
 
-typedef struct _unclaimRequest {
+typedef struct _reclaimResponse {
     char token[50];
+} reclaimResponse;
+
+typedef struct _unclaimRequest {
+    char dummy_field;
 } unclaimRequest;
+
+typedef struct _unclaimResponse {
+    char token[50];
+} unclaimResponse;
 
 typedef struct _set_smartledRequest {
     char token[50];
     int32_t id;
     uint32_t color;
 } set_smartledRequest;
+
+typedef struct _set_smartledResponse {
+    char token[50];
+} set_smartledResponse;
 
 typedef struct _Request {
     pb_size_t which_request_type;
@@ -60,6 +72,9 @@ typedef struct _Response {
     union _Response_response_type {
         get_device_infoResponse get_device_info;
         claimResponse claim;
+        reclaimResponse reclaim;
+        unclaimResponse unclaim;
+        set_smartledResponse led;
     } response_type;
 } Response;
 
@@ -74,8 +89,11 @@ extern "C" {
 #define claimRequest_init_default                {0}
 #define claimResponse_init_default               {""}
 #define reclaimRequest_init_default              {""}
-#define unclaimRequest_init_default              {""}
+#define reclaimResponse_init_default             {""}
+#define unclaimRequest_init_default              {0}
+#define unclaimResponse_init_default             {""}
 #define set_smartledRequest_init_default         {"", 0, 0}
+#define set_smartledResponse_init_default        {""}
 #define Request_init_default                     {0, {get_device_infoRequest_init_default}}
 #define Response_init_default                    {0, {get_device_infoResponse_init_default}}
 #define get_device_infoRequest_init_zero         {0}
@@ -83,8 +101,11 @@ extern "C" {
 #define claimRequest_init_zero                   {0}
 #define claimResponse_init_zero                  {""}
 #define reclaimRequest_init_zero                 {""}
-#define unclaimRequest_init_zero                 {""}
+#define reclaimResponse_init_zero                {""}
+#define unclaimRequest_init_zero                 {0}
+#define unclaimResponse_init_zero                {""}
 #define set_smartledRequest_init_zero            {"", 0, 0}
+#define set_smartledResponse_init_zero           {""}
 #define Request_init_zero                        {0, {get_device_infoRequest_init_zero}}
 #define Response_init_zero                       {0, {get_device_infoResponse_init_zero}}
 
@@ -94,10 +115,12 @@ extern "C" {
 #define get_device_infoResponse_ip_tag           3
 #define claimResponse_token_tag                  1
 #define reclaimRequest_token_tag                 1
-#define unclaimRequest_token_tag                 1
+#define reclaimResponse_token_tag                1
+#define unclaimResponse_token_tag                1
 #define set_smartledRequest_token_tag            1
 #define set_smartledRequest_id_tag               2
 #define set_smartledRequest_color_tag            3
+#define set_smartledResponse_token_tag           1
 #define Request_get_device_info_tag              1
 #define Request_claim_tag                        2
 #define Request_reclaim_tag                      3
@@ -105,6 +128,9 @@ extern "C" {
 #define Request_set_smartled_tag                 5
 #define Response_get_device_info_tag             1
 #define Response_claim_tag                       2
+#define Response_reclaim_tag                     3
+#define Response_unclaim_tag                     4
+#define Response_led_tag                         5
 
 /* Struct field encoding specification for nanopb */
 #define get_device_infoRequest_FIELDLIST(X, a) \
@@ -134,10 +160,20 @@ X(a, STATIC,   REQUIRED, STRING,   token,             1)
 #define reclaimRequest_CALLBACK NULL
 #define reclaimRequest_DEFAULT NULL
 
-#define unclaimRequest_FIELDLIST(X, a) \
+#define reclaimResponse_FIELDLIST(X, a) \
 X(a, STATIC,   REQUIRED, STRING,   token,             1)
+#define reclaimResponse_CALLBACK NULL
+#define reclaimResponse_DEFAULT NULL
+
+#define unclaimRequest_FIELDLIST(X, a) \
+
 #define unclaimRequest_CALLBACK NULL
 #define unclaimRequest_DEFAULT NULL
+
+#define unclaimResponse_FIELDLIST(X, a) \
+X(a, STATIC,   REQUIRED, STRING,   token,             1)
+#define unclaimResponse_CALLBACK NULL
+#define unclaimResponse_DEFAULT NULL
 
 #define set_smartledRequest_FIELDLIST(X, a) \
 X(a, STATIC,   REQUIRED, STRING,   token,             1) \
@@ -145,6 +181,11 @@ X(a, STATIC,   REQUIRED, INT32,    id,                2) \
 X(a, STATIC,   REQUIRED, UINT32,   color,             3)
 #define set_smartledRequest_CALLBACK NULL
 #define set_smartledRequest_DEFAULT NULL
+
+#define set_smartledResponse_FIELDLIST(X, a) \
+X(a, STATIC,   REQUIRED, STRING,   token,             1)
+#define set_smartledResponse_CALLBACK NULL
+#define set_smartledResponse_DEFAULT NULL
 
 #define Request_FIELDLIST(X, a) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (request_type,get_device_info,request_type.get_device_info),   1) \
@@ -162,19 +203,28 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (request_type,set_smartled,request_type.set_s
 
 #define Response_FIELDLIST(X, a) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (response_type,get_device_info,response_type.get_device_info),   1) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (response_type,claim,response_type.claim),   2)
+X(a, STATIC,   ONEOF,    MESSAGE,  (response_type,claim,response_type.claim),   2) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (response_type,reclaim,response_type.reclaim),   3) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (response_type,unclaim,response_type.unclaim),   4) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (response_type,led,response_type.led),   5)
 #define Response_CALLBACK NULL
 #define Response_DEFAULT NULL
 #define Response_response_type_get_device_info_MSGTYPE get_device_infoResponse
 #define Response_response_type_claim_MSGTYPE claimResponse
+#define Response_response_type_reclaim_MSGTYPE reclaimResponse
+#define Response_response_type_unclaim_MSGTYPE unclaimResponse
+#define Response_response_type_led_MSGTYPE set_smartledResponse
 
 extern const pb_msgdesc_t get_device_infoRequest_msg;
 extern const pb_msgdesc_t get_device_infoResponse_msg;
 extern const pb_msgdesc_t claimRequest_msg;
 extern const pb_msgdesc_t claimResponse_msg;
 extern const pb_msgdesc_t reclaimRequest_msg;
+extern const pb_msgdesc_t reclaimResponse_msg;
 extern const pb_msgdesc_t unclaimRequest_msg;
+extern const pb_msgdesc_t unclaimResponse_msg;
 extern const pb_msgdesc_t set_smartledRequest_msg;
+extern const pb_msgdesc_t set_smartledResponse_msg;
 extern const pb_msgdesc_t Request_msg;
 extern const pb_msgdesc_t Response_msg;
 
@@ -184,8 +234,11 @@ extern const pb_msgdesc_t Response_msg;
 #define claimRequest_fields &claimRequest_msg
 #define claimResponse_fields &claimResponse_msg
 #define reclaimRequest_fields &reclaimRequest_msg
+#define reclaimResponse_fields &reclaimResponse_msg
 #define unclaimRequest_fields &unclaimRequest_msg
+#define unclaimResponse_fields &unclaimResponse_msg
 #define set_smartledRequest_fields &set_smartledRequest_msg
+#define set_smartledResponse_fields &set_smartledResponse_msg
 #define Request_fields &Request_msg
 #define Response_fields &Response_msg
 
@@ -198,8 +251,11 @@ extern const pb_msgdesc_t Response_msg;
 #define get_device_infoRequest_size              0
 #define get_device_infoResponse_size             103
 #define reclaimRequest_size                      51
+#define reclaimResponse_size                     51
 #define set_smartledRequest_size                 68
-#define unclaimRequest_size                      51
+#define set_smartledResponse_size                51
+#define unclaimRequest_size                      0
+#define unclaimResponse_size                     51
 
 #ifdef __cplusplus
 } /* extern "C" */

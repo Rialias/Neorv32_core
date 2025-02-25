@@ -37,7 +37,7 @@ bool receive_response(pb_byte_t *message, size_t length);
 int main()
 {
 
-    int serial_port = open("/dev/ttyUSB7", O_RDWR);
+    int serial_port = open("/dev/ttyUSB3", O_RDWR);
     struct termios tty;
 
     if (tcgetattr(serial_port, &tty) != 0)
@@ -64,7 +64,7 @@ int main()
     tty.c_oflag &= ~ONLCR;
 
     tty.c_cc[VTIME] = 10;
-    tty.c_cc[VMIN] = 20;
+    tty.c_cc[VMIN] = 0;
 
     cfsetispeed(&tty, B19200);
     cfsetospeed(&tty, B19200);
@@ -159,6 +159,10 @@ bool send_request(int fd, int request_type)
     else if (request_type == 3)
     {
         request.which_request_type = Request_reclaim_tag;
+        char token[10];
+        printf("Enter the token \n");
+        scanf("%s", token);
+        strcpy(request.request_type.reclaim.token, token);
     }
     else if (request_type == 4)
     {
@@ -171,7 +175,7 @@ bool send_request(int fd, int request_type)
         int32_t id;
         uint32_t color;
         printf("1. Enter the color to set \n");
-        scanf("%d", &color);
+        scanf("%x", &color);
         printf("2. Enter the id to set \n");
         scanf("%d", &id);
         printf("3. Enter the token \n");
@@ -239,6 +243,21 @@ bool receive_response(pb_byte_t *message, size_t length)
         printf("claim\n");
         printf("Token : %s\n",response.response_type.claim.token);
     }
+    else if (response.which_response_type == Response_reclaim_tag)
+    {
+        printf("Reclaimed the device\n");
+        printf("Token : %s\n",response.response_type.reclaim.token);
+    }
+    else if (response.which_response_type == Response_unclaim_tag)
+    {
+        printf("Unclaimed the device \n");
+        printf("Token : %s\n",response.response_type.unclaim.token);
+    } 
+    else if (response.which_response_type == Response_led_tag)
+    {
+        printf("Set Neopixel LED \n");
+        printf("Token : %s\n",response.response_type.led.token);
+    } 
     else
     {
         printf("Wrong Response \n");

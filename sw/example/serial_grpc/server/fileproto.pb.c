@@ -21,10 +21,19 @@ PB_BIND(claimResponse, claimResponse, AUTO)
 PB_BIND(reclaimRequest, reclaimRequest, AUTO)
 
 
+PB_BIND(reclaimResponse, reclaimResponse, AUTO)
+
+
 PB_BIND(unclaimRequest, unclaimRequest, AUTO)
 
 
+PB_BIND(unclaimResponse, unclaimResponse, AUTO)
+
+
 PB_BIND(set_smartledRequest, set_smartledRequest, AUTO)
+
+
+PB_BIND(set_smartledResponse, set_smartledResponse, AUTO)
 
 
 PB_BIND(Request, Request, AUTO)
