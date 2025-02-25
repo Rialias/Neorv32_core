@@ -74,67 +74,55 @@ int main()
         printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
         return 1;
     }
-    /* Clear the input buffer*/
-    if (tcflush(serial_port, TCIFLUSH) != 0)
+    while (1)
     {
-        perror("tcflush");
-        close(serial_port);
-        return -1;
-    }
 
-    int request_type = 0;
-    printf("1. Get Device Info \n 2.Claim the device \n 3.Reclaim the device \n 4.Unlcaim the device \n 5.set LEd \n");
-    scanf("%d", &request_type);
-    send_request(serial_port, request_type);
+        int request_type = 0;
+        printf("1. Get Device Info \n 2.Claim the device \n 3.Reclaim the device \n 4.Unlcaim the device \n 5.set LEd \n");
+        scanf("%d", &request_type);
+        send_request(serial_port, request_type);
 
-    char read_buf[256];
-    char key = 'y';
-    do
-    {
-        int num_bytes = read(serial_port, &key, 1);
-        if (num_bytes < 0)
+        /* Clear the input buffer*/
+        if (tcflush(serial_port, TCIFLUSH) != 0)
         {
-            printf("Error reading: %s\n", strerror(errno));
+            perror("tcflush");
+            close(serial_port);
+            return -1;
+        }
+        char key = 'y';
+        do
+        {
+            int num_bytes = read(serial_port, &key, 1);
+            if (num_bytes < 0)
+            {
+                printf("Error reading: %s\n", strerror(errno));
+                return 1;
+            }
+        } while (key != 'a');
+        char message_length = 'z';
+        read(serial_port, &message_length, sizeof(message_length));
+        printf("Received message Length: %d\n", message_length);
+        size_t length = (size_t)message_length;
+        char read_buf[length + 2];
+        uint8_t buffer[length];
+
+        int num_bytes = read(serial_port, &read_buf, length + 2);
+        if (num_bytes <= 0)
+        {
+            printf("Error reading: %s", strerror(errno));
             return 1;
         }
-    } while (key != 'a');
-    /* printf("Received 'a', continuing to read data...\n"); */
-    /*memset(&read_buf, '\0', sizeof(read_buf)); */
-    char message_length = 'z';
-    read(serial_port, &message_length, sizeof(message_length));
-    printf("Received message Length: %d\n", message_length);
-    size_t length = (size_t)message_length;
-    /*printf("Length: %ld\n",length); */
-    uint8_t buffer[message_length];
-
-    int num_bytes = read(serial_port, &read_buf, length+2);
-    if (num_bytes <= 0)
-    {
-        printf("Error reading: %s", strerror(errno));
-        return 1;
-    }
-    /* printf("Read %i bytes. Received message:%s", num_bytes, read_buf);*/
-    int i;
-    int j = 0;
-    for (i = 0; i < length + 2; i++)
-    {
-        if ((uint8_t)read_buf[i] != 13)
+        int i;
+        int j = 0;
+        for (i = 0; i < length + 2; i++)
         {
-            buffer[j++] = (uint8_t)read_buf[i];
+            if ((uint8_t)read_buf[i] != 13)
+            {
+                buffer[j++] = (uint8_t)read_buf[i];
+            }
         }
+        receive_response(buffer, length);
     }
-
-    /*for (i = 0; i < length; i++)
-    {
-        printf("%d", (uint8_t)read_buf[i]);
-    }
-    printf("\n");
-    for (i = 0; i < num_bytes - 1; i++)
-    {
-        printf("%d", buffer[i]);
-    } */
-    receive_response(buffer, length);
-
     close(serial_port);
     return 0;
 }
@@ -187,6 +175,7 @@ bool send_request(int fd, int request_type)
     else
     {
         printf("Wrong option \n");
+        return 1;
     }
 
     status = pb_encode_delimited(&ostream, Request_fields, &request);
@@ -197,21 +186,14 @@ bool send_request(int fd, int request_type)
         return 1;
     }
 
-    /*for (i = 0; i < message_length; i++)
-    {
-        printf("%d\n", buffer[i]);
-    }
-    printf("\n"); */
     for (i = 0; i < message_length; i++)
     {
         j += sprintf(&msg_buffer[j], "%d ", buffer[i]);
     }
     msg_buffer[j - 1] = '\r';
-    /*printf("j value = %ld\n", j);
-    int written = */
+
     write(fd, msg_buffer, strlen(msg_buffer));
-    /*printf("written = %d\n", written);
-    printf("send value = %s\n", msg_buffer); */
+
     printf("\n");
     printf("Sucessfully sent data. Message length = %ld \n", message_length);
     return 0;
@@ -219,9 +201,6 @@ bool send_request(int fd, int request_type)
 
 bool receive_response(pb_byte_t *message, size_t length)
 {
-    /*char buffer[256];
-    uint8_t message[256];
-    size_t length = 0; */
     Response response = Response_init_zero;
 
     pb_istream_t istream = pb_istream_from_buffer(message, length);
@@ -256,7 +235,7 @@ bool receive_response(pb_byte_t *message, size_t length)
     {
         printf("Set Neopixel LED \n");
         printf("Token : %s\n", response.response_type.led.token);
-        if(strcmp("password", response.response_type.led.token))
+        if (strcmp("password", response.response_type.led.token))
         {
             printf("Token doesnt match, LED is not set \n");
         }
