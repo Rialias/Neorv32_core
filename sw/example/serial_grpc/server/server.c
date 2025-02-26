@@ -64,7 +64,7 @@ int main()
     // neorv32_cpu_delay_ms(3000);
     char buffer[128];
     size_t length = 0;
-
+    srand(time(0));
     for (;;)
     {
         neorv32_uart0_printf("waiting for message");
@@ -123,7 +123,6 @@ bool handle_request(pb_istream_t *istream)
         uint32_t current_state = neorv32_gpio_port_get(); // Read the current state of the GPIO port
         current_state &= 0xFC;                           // Clear the second bit (bit 1) to set it to 0 (turn on the second LED)
         neorv32_gpio_port_set(current_state);
-        srand(time(0));
         generateRandomString(randomString, 11);
         strcpy(response.response_type.claim.token, randomString);
         response.which_response_type = Response_claim_tag;
