@@ -23,6 +23,7 @@
 
 size_t message_length;
 bool status;
+char token[10];
 bool send_request(int fd, int request_type);
 bool receive_response(pb_byte_t *message, size_t length);
 
@@ -90,6 +91,8 @@ int main()
         }
         char key = 'y';
         do
+
+
         {
             int num_bytes = read(serial_port, &key, 1);
             if (num_bytes < 0)
@@ -146,10 +149,6 @@ bool send_request(int fd, int request_type)
     else if (request_type == 3)
     {
         request.which_request_type = Request_reclaim_tag;
-        char token[10];
-        printf("Enter the token \n");
-        scanf("%s", token);
-        strcpy(request.request_type.reclaim.token, token);
     }
     else if (request_type == 4)
     {
@@ -158,15 +157,12 @@ bool send_request(int fd, int request_type)
     else if (request_type == 5)
     {
         request.which_request_type = Request_set_smartled_tag;
-        char token[20];
         int32_t id;
         uint32_t color;
         printf("1. Enter the color to set \n");
         scanf("%x", &color);
         printf("2. Enter the id to set \n");
         scanf("%d", &id);
-        printf("3. Enter the token \n");
-        scanf("%s", token);
         request.request_type.set_smartled.color = color;
         request.request_type.set_smartled.id = id;
         strcpy(request.request_type.set_smartled.token, token);
@@ -201,7 +197,6 @@ bool send_request(int fd, int request_type)
 bool receive_response(pb_byte_t *message, size_t length)
 {
     Response response = Response_init_zero;
-
     pb_istream_t istream = pb_istream_from_buffer(message, length);
     if (!pb_decode_delimited(&istream, Response_fields, &response))
     {
@@ -220,6 +215,7 @@ bool receive_response(pb_byte_t *message, size_t length)
     {
         printf("claim\n");
         printf("Token : %s\n", response.response_type.claim.token);
+        strcpy(token, response.response_type.claim.token);
     }
     else if (response.which_response_type == Response_reclaim_tag)
     {
@@ -230,6 +226,7 @@ bool receive_response(pb_byte_t *message, size_t length)
     {
         printf("Unclaimed the device \n");
         printf("Token : %s\n", response.response_type.unclaim.token);
+        strcpy(token, response.response_type.unclaim.token);
     }
     else if (response.which_response_type == Response_led_tag)
     {

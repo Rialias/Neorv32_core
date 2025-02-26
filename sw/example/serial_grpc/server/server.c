@@ -9,7 +9,8 @@
 // #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <stdlib.h>
+#include <time.h>
 #include <pb_encode.h>
 #include <pb_decode.h>
 
@@ -27,12 +28,26 @@
 #define MAX_INTENSITY (16)
 /**@}*/
 
+char randomString[10];
 size_t message_length;
 bool status;
 
 bool handle_request(pb_istream_t *istream);
 
 int setLED(uint32_t color, int32_t id, char *token);
+
+void generateRandomString(char *str, size_t length) {
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    if (length) {
+        --length;
+        for (size_t n = 0; n < length; n++) {
+            int key = rand() % (int)(sizeof(charset) - 1);
+            str[n] = charset[key];
+        }
+        str[length] = '\0';
+    }
+}
+
 /**********************************************************************/
 /**
  * Main function; prints some fancy stuff via UART.
@@ -108,13 +123,15 @@ bool handle_request(pb_istream_t *istream)
         uint32_t current_state = neorv32_gpio_port_get(); // Read the current state of the GPIO port
         current_state &= 0xFC;                           // Clear the second bit (bit 1) to set it to 0 (turn on the second LED)
         neorv32_gpio_port_set(current_state);
-        strcpy(response.response_type.claim.token, "password");
+        srand(time(0));
+        generateRandomString(randomString, 11);
+        strcpy(response.response_type.claim.token, randomString);
         response.which_response_type = Response_claim_tag;
     }
     else if (request.which_request_type == Request_reclaim_tag)
     {
         // neorv32_uart0_printf("reclaim\n");
-        strcpy(response.response_type.reclaim.token, request.request_type.reclaim.token);
+        strcpy(response.response_type.reclaim.token, randomString);
         response.which_response_type = Response_reclaim_tag;
     }
     else if (request.which_request_type == Request_unclaim_tag)
@@ -123,7 +140,8 @@ bool handle_request(pb_istream_t *istream)
         uint32_t current_state = neorv32_gpio_port_get(); // Read the current state of the GPIO port
         current_state |= 0x02;                            // Set the second bit to 1 (turn off the second LED)
         neorv32_gpio_port_set(current_state);
-        strcpy(response.response_type.unclaim.token, "no_token");
+        strcpy(randomString, "no_token");
+        strcpy(response.response_type.unclaim.token, randomString);
         response.which_response_type = Response_unclaim_tag;
     }
     else if (request.which_request_type == Request_set_smartled_tag)
@@ -175,7 +193,7 @@ int setLED(uint32_t color, int32_t id, char *token)
         return 1;
     }
     set_smartledRequest led = set_smartledRequest_init_zero;
-    if (strcmp(token, "password"))
+    if (strcmp(token, randomString))
     {
         // neorv32_uart0_printf("\n Device is not claimed. Token doesn't match \n\n");
     }

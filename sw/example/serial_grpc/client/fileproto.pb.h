@@ -31,7 +31,7 @@ typedef struct _claimResponse {
 } claimResponse;
 
 typedef struct _reclaimRequest {
-    char token[30];
+    char dummy_field;
 } reclaimRequest;
 
 typedef struct _reclaimResponse {
@@ -88,7 +88,7 @@ extern "C" {
 #define get_device_infoResponse_init_default     {"", "", ""}
 #define claimRequest_init_default                {0}
 #define claimResponse_init_default               {""}
-#define reclaimRequest_init_default              {""}
+#define reclaimRequest_init_default              {0}
 #define reclaimResponse_init_default             {""}
 #define unclaimRequest_init_default              {0}
 #define unclaimResponse_init_default             {""}
@@ -100,7 +100,7 @@ extern "C" {
 #define get_device_infoResponse_init_zero        {"", "", ""}
 #define claimRequest_init_zero                   {0}
 #define claimResponse_init_zero                  {""}
-#define reclaimRequest_init_zero                 {""}
+#define reclaimRequest_init_zero                 {0}
 #define reclaimResponse_init_zero                {""}
 #define unclaimRequest_init_zero                 {0}
 #define unclaimResponse_init_zero                {""}
@@ -114,7 +114,6 @@ extern "C" {
 #define get_device_infoResponse_product_tag      2
 #define get_device_infoResponse_ip_tag           3
 #define claimResponse_token_tag                  1
-#define reclaimRequest_token_tag                 1
 #define reclaimResponse_token_tag                1
 #define unclaimResponse_token_tag                1
 #define set_smartledRequest_token_tag            1
@@ -156,7 +155,7 @@ X(a, STATIC,   REQUIRED, STRING,   token,             1)
 #define claimResponse_DEFAULT NULL
 
 #define reclaimRequest_FIELDLIST(X, a) \
-X(a, STATIC,   REQUIRED, STRING,   token,             1)
+
 #define reclaimRequest_CALLBACK NULL
 #define reclaimRequest_DEFAULT NULL
 
@@ -250,7 +249,7 @@ extern const pb_msgdesc_t Response_msg;
 #define claimResponse_size                       31
 #define get_device_infoRequest_size              0
 #define get_device_infoResponse_size             113
-#define reclaimRequest_size                      31
+#define reclaimRequest_size                      0
 #define reclaimResponse_size                     31
 #define set_smartledRequest_size                 48
 #define set_smartledResponse_size                31

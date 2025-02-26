@@ -14,15 +14,12 @@ message claimResponse {
     required string token = 1;
 }
 
-message reclaimRequest {
-    required string token = 1;
-}
+message reclaimRequest {}
 
 message reclaimResponse {
     required string token = 1;
 }
     
-
 message unclaimRequest {}
   
 
