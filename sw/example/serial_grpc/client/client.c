@@ -78,7 +78,7 @@ int main()
     while (1)
     {
         int request_type = 0;
-        printf("1. Get Device Info \n 2.Claim the device \n 3.Reclaim the device \n 4.Unlcaim the device \n 5.set LEd \n");
+        printf("\nChoose an option: \n1. Get Device Info \n2.Claim the device \n3.Reclaim the device \n4.Unlcaim the device \n5.set LEd \n");
         scanf("%d", &request_type);
         send_request(serial_port, request_type);
 
@@ -220,7 +220,8 @@ bool receive_response(pb_byte_t *message, size_t length)
     else if (response.which_response_type == Response_reclaim_tag)
     {
         printf("Reclaimed the device\n");
-        printf("Token : %s\n", response.response_type.reclaim.token);
+        strcpy(token, response.response_type.reclaim.token);
+        printf("Token : %s\n", response.response_type.reclaim.token);       
     }
     else if (response.which_response_type == Response_unclaim_tag)
     {
@@ -231,8 +232,8 @@ bool receive_response(pb_byte_t *message, size_t length)
     else if (response.which_response_type == Response_led_tag)
     {
         printf("Set Neopixel LED \n");
-        printf("Token : %s\n", response.response_type.led.token);
-        if (strcmp("password", response.response_type.led.token))
+        /*printf("Token : %s\n", response.response_type.led.token); */
+        if (strcmp(token, response.response_type.led.token))
         {
             printf("Token doesnt match, LED is not set \n");
         }

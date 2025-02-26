@@ -140,14 +140,13 @@ bool handle_request(pb_istream_t *istream)
         uint32_t current_state = neorv32_gpio_port_get(); // Read the current state of the GPIO port
         current_state |= 0x02;                            // Set the second bit to 1 (turn off the second LED)
         neorv32_gpio_port_set(current_state);
-        strcpy(randomString, "no_token");
-        strcpy(response.response_type.unclaim.token, randomString);
+        strcpy(response.response_type.unclaim.token, "no_token");
         response.which_response_type = Response_unclaim_tag;
     }
     else if (request.which_request_type == Request_set_smartled_tag)
     {
         // neorv32_uart0_printf("samrtled\n");
-        strcpy(response.response_type.led.token, request.request_type.set_smartled.token);
+        strcpy(response.response_type.led.token, randomString);
         uint32_t color = request.request_type.set_smartled.color;
         int32_t id = request.request_type.set_smartled.id;
         char token[20];
