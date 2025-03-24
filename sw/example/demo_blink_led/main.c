@@ -6,13 +6,21 @@
 // SPDX-License-Identifier: BSD-3-Clause                                            //
 // ================================================================================ //
 
-
 /**********************************************************************//**
  * @file demo_blink_led/main.c
- * @author Stephan Nolting
- * @brief Minimal blinking LED demo program using the lowest 8 bits of the GPIO.output port.
+ * @author Riya Alias
+ * @brief Minimal blinking LED demo program along with classic hello world program
+ *
  **************************************************************************/
 #include <neorv32.h>
+
+/**********************************************************************//**
+ * @name User configuration
+ **************************************************************************/
+/**@{*/
+/** UART BAUD rate */
+#define BAUD_RATE 19200
+/**@}*/
 
 
 /**********************************************************************//**
@@ -29,11 +37,26 @@ int main() {
 
   int cnt = 0;
 
+  // capture all exceptions and give debug info via UART
+  // this is not required, but keeps us safe
+  neorv32_rte_setup();
+
+  // setup UART at default baud rate, no interrupts
+  neorv32_uart0_setup(BAUD_RATE, 0);
+
+  // print project logo via UART
+  neorv32_rte_print_logo();
+
+
   while (1) {
     neorv32_gpio_port_set(cnt++ & 0xFF); // increment counter and mask for lowest 8 bit
     neorv32_cpu_delay_ms(250); // wait 250ms using busy wait
+    // say hello
+    neorv32_uart0_puts("Hello world! :)\n");
+    if(cnt == 16)
+    {
+      cnt = 0;
+    }
   }
-
-  // this should never be reached
   return 0;
 }

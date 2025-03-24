@@ -19,7 +19,6 @@
 /**
  * @name User configuration
  **************************************************************************/
-/* This is the buffer where we will store our message. */
 
 size_t message_length;
 bool status;

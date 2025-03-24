@@ -7,25 +7,15 @@
 // ================================================================================ //
 
 #include <neorv32.h>
+#include <string.h>
 
-/**********************************************************************//**
- * @name User configuration
- **************************************************************************/
 /**@{*/
 /** UART BAUD rate */
 #define BAUD_RATE 19200
 /**@}*/
 
-
-
-/**********************************************************************//**
- * Main function; prints some fancy stuff via UART.
- *
- * @note This program requires the UART interface to be synthesized.
- *
- * @return 0 if execution was successful
- **************************************************************************/
-int main() {
+int main()
+{
 
   // capture all exceptions and give debug info via UART
   // this is not required, but keeps us safe
@@ -34,14 +24,26 @@ int main() {
   // setup UART at default baud rate, no interrupts
   neorv32_uart0_setup(BAUD_RATE, 0);
 
+  neorv32_cpu_delay_ms(5000);
   // print project logo via UART
-  int8_t buffer = 27;
-  
-  for(;;)
+  char buffer[512];
+  size_t length = 0;
+  for (;;)
   {
-    neorv32_uart0_printf("%d\n", buffer);
-    
+    neorv32_uart0_printf("waiting for message");
+    length = neorv32_uart0_scan(buffer, sizeof(buffer), 1);
+    neorv32_uart0_printf("\n");
+
+    if (!length) // nothing to be done
+      continue;
+
+    if (!strcmp(buffer, "helloWorld"))
+    {
+      for (int i = 0; i < 200; i++)
+      {
+        neorv32_uart0_printf("%d\n", i);
+      }
+    }
   }
-  
   return 0;
 }

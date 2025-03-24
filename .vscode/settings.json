@@ -5,6 +5,10 @@
         "termios.h": "c",
         "cstdint": "c",
         "termbits.h": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "array": "c",
+        "string": "c",
+        "span": "c",
+        "functional": "c"
     }
 }
